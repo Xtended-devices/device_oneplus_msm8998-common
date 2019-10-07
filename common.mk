@@ -549,3 +549,6 @@ SRC_AUDIO_HAL_DIR := hardware/qcom-caf/msm8998/audio
 
 PRODUCT_SOONG_NAMESPACES += \
     hardware/qcom-caf/msm8998
+
+#inherit our OneplusShit
+$(call inherit-product, device/oneplus/OneplusShit/opshit.mk)
