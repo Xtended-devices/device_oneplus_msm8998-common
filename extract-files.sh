@@ -22,9 +22,9 @@ set -e
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
 
-YAAP_ROOT="$MY_DIR"/../../..
+XTENDED_ROOT="$MY_DIR"/../../..
 
-HELPER="$YAAP_ROOT"/vendor/yaap/build/tools/extract_utils.sh
+HELPER="$XTENDED_ROOT"/vendor/xtended/build/tools/extract_utils.sh
 if [ ! -f "$HELPER" ]; then
     echo "Unable to find helper script at $HELPER"
     exit 1
@@ -53,19 +53,19 @@ if [ -z "$SRC" ]; then
 fi
 
 # Initialize the helper
-setup_vendor "$DEVICE_COMMON" "$VENDOR" "$YAAP_ROOT" true "$CLEAN_VENDOR"
+setup_vendor "$DEVICE_COMMON" "$VENDOR" "$XTENDED_ROOT" true "$CLEAN_VENDOR"
 
 extract "$MY_DIR"/proprietary-files-qc-perf.txt "$SRC" "$SECTION"
 extract "$MY_DIR"/proprietary-files.txt "$SRC" "$SECTION"
 
 if [ -s "$MY_DIR"/../$DEVICE/proprietary-files.txt ]; then
     # Reinitialize the helper for device
-    setup_vendor "$DEVICE" "$VENDOR" "$YAAP_ROOT" false "$CLEAN_VENDOR"
+    setup_vendor "$DEVICE" "$VENDOR" "$XTENDED_ROOT" false "$CLEAN_VENDOR"
 
     extract "$MY_DIR"/../$DEVICE/proprietary-files.txt "$SRC" "$SECTION"
 fi
 
-COMMON_BLOB_ROOT="$YAAP_ROOT"/vendor/"$VENDOR"/"$DEVICE_COMMON"/proprietary
+COMMON_BLOB_ROOT="$XTENDED_ROOT"/vendor/"$VENDOR"/"$DEVICE_COMMON"/proprietary
 
 #
 # Fix framework path
