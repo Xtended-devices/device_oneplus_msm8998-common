@@ -305,7 +305,9 @@ framework/com.qualcomm.qti.camera.jar
 vendor/lib/libcamera2ndk_vendor.so
 vendor/lib/libcamera_oneplus_bokeh_wrapper.so
 vendor/lib/libcvface_api.so
+vendor/lib/libDeVIS.so
 vendor/lib/libDxHdcp.so
+vendor/lib/libEIS.so
 vendor/lib/libflash_pmic.so
 vendor/lib/libgui_vendor.so
 vendor/lib/libjpegdhw.so
@@ -318,6 +320,7 @@ vendor/lib/libmmlib2d_interface.so
 vendor/lib/libmmqjpegdma.so
 vendor/lib/libmmqjpeg_codec.so
 vendor/lib/libmpbase.so
+vendor/lib/libOGLManager.so
 vendor/lib/libopcamera_native_modules.so
 vendor/lib/libqomx_core.so
 vendor/lib/libqomx_jpegdec.so
@@ -340,7 +343,10 @@ vendor/lib/libvidhance.so
 vendor/lib/lib_oneplus_watermark.so
 vendor/lib/vendor.qti.hardware.camera.device@1.0.so
 vendor/lib64/libcamera2ndk_vendor.so
+vendor/lib64/libDeVIS.so
 vendor/lib64/libDxHdcp.so
+vendor/lib64/libEIS.so
+vendor/lib64/libOGLManager.so
 vendor/lib64/libseemore.so
 vendor/lib64/libsns_low_lat_stream_stub.so
 vendor/lib64/libvideoutils.so
