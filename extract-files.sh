@@ -20,87 +20,83 @@ set -e
 
 # Load extract_utils and do some sanity checks
 MY_DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
+if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
 
-XTENDED_ROOT="$MY_DIR"/../../..
+XTENDED_ROOT="${MY_DIR}"/../../..
 
-HELPER="$XTENDED_ROOT"/vendor/xtended/build/tools/extract_utils.sh
-if [ ! -f "$HELPER" ]; then
-    echo "Unable to find helper script at $HELPER"
+HELPER="${XTENDED_ROOT}/vendor/xtended/build/tools/extract_utils.sh"
+if [ ! -f "${HELPER}" ]; then
+    echo "Unable to find helper script at ${HELPER}"
     exit 1
 fi
-. "$HELPER"
+source "${HELPER}"
 
-# Default to NOT sanitizing the vendor folder before extraction
+function blob_fixup() {
+    case "${1}" in
+    vendor/etc/permissions/com.fingerprints.extension.xml )
+        sed -i -e 's/\/system\/framework\//\/vendor\/framework\//g' "${2}"
+        ;;
+    product/etc/permissions/qcnvitems.xml | product/etc/permissions/vendor.qti.hardware.factory.xml | product/etc/permissions/vendor-qti-hardware-sensorscalibrate.xml )
+        sed -i -e 's/\/system\/framework\//\/system\/product\/framework\//g' "${2}"
+        ;;
+    product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml | product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml )
+        sed -i -e 's|xml version=\"2.0\"|xml version=\"1.0\"|g' "${2}"
+        ;;
+    esac
+    case "${DEVICE}" in
+        dumpling )
+        case "${1}" in
+            vendor/lib/hw/fingerprint.goodix.so | vendor/lib64/hw/fingerprint.goodix.so )
+            sed -i "s|\x00goodix.fingerprint\x00|\x00fingerprint\x00\x00\x00\x00\x00\x00\x00\x00|" "${2}"
+            ;;
+            esac
+    ;;
+    esac
+}
+
+# Default to sanitizing the vendor folder before extraction
 CLEAN_VENDOR=true
 
-while [ "$1" != "" ]; do
-    case $1 in
-        -n | --no-cleanup )     CLEAN_VENDOR=false
-                                ;;
-        -s | --section )        shift
-                                SECTION=$1
-                                CLEAN_VENDOR=false
-                                ;;
-        * )                     SRC=$1
-                                ;;
+SECTION=
+KANG=
+
+while [ "${#}" -gt 0 ]; do
+    case "${1}" in
+        -n | --no-cleanup )
+                CLEAN_VENDOR=false
+                ;;
+        -k | --kang )
+                KANG="--kang"
+                ;;
+        -s | --section )
+                SECTION="${2}"; shift
+                CLEAN_VENDOR=false
+                ;;
+        * )
+                SRC="${1}"
+                ;;
     esac
     shift
 done
 
-if [ -z "$SRC" ]; then
-    SRC=adb
+if [ -z "${SRC}" ]; then
+    SRC="adb"
 fi
 
-# Initialize the helper
-setup_vendor "$DEVICE_COMMON" "$VENDOR" "$XTENDED_ROOT" true "$CLEAN_VENDOR"
+# Initialize the helper for common device
+setup_vendor "${DEVICE_COMMON}" "${VENDOR}" "${XTENDED_ROOT}" true "${CLEAN_VENDOR}"
 
-extract "$MY_DIR"/proprietary-files-qc-perf.txt "$SRC" "$SECTION"
-extract "$MY_DIR"/proprietary-files.txt "$SRC" "$SECTION"
+extract "${MY_DIR}/proprietary-files.txt" "${SRC}" \
+        "${KANG}" --section "${SECTION}"
 
-if [ -s "$MY_DIR"/../$DEVICE/proprietary-files.txt ]; then
+if [ -s "${MY_DIR}/../${DEVICE}/proprietary-files.txt" ]; then
     # Reinitialize the helper for device
-    setup_vendor "$DEVICE" "$VENDOR" "$XTENDED_ROOT" false "$CLEAN_VENDOR"
+    setup_vendor "${DEVICE}" "${VENDOR}" "${XTENDED_ROOT}" false "${CLEAN_VENDOR}"
 
-    extract "$MY_DIR"/../$DEVICE/proprietary-files.txt "$SRC" "$SECTION"
+    extract "${MY_DIR}/../${DEVICE}/proprietary-files.txt" "${SRC}" \
+            "${KANG}" --section "${SECTION}"
 fi
 
-COMMON_BLOB_ROOT="$XTENDED_ROOT"/vendor/"$VENDOR"/"$DEVICE_COMMON"/proprietary
+COMMON_BLOB_ROOT="${XTENDED_ROOT}/vendor/${VENDOR}/${DEVICE_COMMON}/proprietary"
 
-#
-# Fix framework path
-#
-function fix_framework_path () {
-    sed -i \
-        's/\/system\/framework\//\/vendor\/framework\//g' \
-        "$COMMON_BLOB_ROOT"/"$1"
-}
-
-fix_framework_path vendor/etc/permissions/com.fingerprints.extension.xml
-
-#
-# Fix product path
-#
-function fix_product_path () {
-    sed -i \
-        's/\/system\/framework\//\/system\/product\/framework\//g' \
-        "$COMMON_BLOB_ROOT"/"$1"
-}
-
-fix_product_path product/etc/permissions/qcnvitems.xml
-fix_product_path product/etc/permissions/vendor.qti.hardware.factory.xml
-fix_product_path product/etc/permissions/vendor-qti-hardware-sensorscalibrate.xml
-
-#
-# Fix xml version
-#
-function fix_xml_version () {
-    sed -i \
-        's/xml version="2.0"/xml version="1.0"/' \
-        "$COMMON_BLOB_ROOT"/"$1"
-}
-
-fix_xml_version product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml
-fix_xml_version product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml
-
-"$MY_DIR"/setup-makefiles.sh
+"${MY_DIR}/setup-makefiles.sh"

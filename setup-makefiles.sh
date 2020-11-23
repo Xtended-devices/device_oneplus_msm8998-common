@@ -38,56 +38,28 @@ setup_vendor "$DEVICE_COMMON" "$VENDOR" "$XTENDED_ROOT" true
 # Copyright headers and guards
 write_headers "cheeseburger dumpling"
 
-# The standard blobs
-write_makefiles "$MY_DIR"/proprietary-files.txt true
-
-# Qualcomm BSP blobs - we put a conditional around here
-# in case the BSP is actually being built
-printf '\n%s\n' "ifeq (\$(QCPATH),)" >> "$PRODUCTMK"
-printf '\n%s\n' "ifeq (\$(QCPATH),)" >> "$ANDROIDMK"
-
-
-# Qualcomm performance blobs - conditional as well
-# in order to support Cyanogen OS builds
-cat << EOF >> "$PRODUCTMK"
-endif
-
--include vendor/extra/devices.mk
-ifneq (\$(call is-qc-perf-target),true)
-EOF
+# The standard common blobs
+write_makefiles "${MY_DIR}/proprietary-files.txt" true
 
 cat << EOF >> "$ANDROIDMK"
-endif
-
-ifneq (\$(TARGET_HAVE_QC_PERF),true)
-EOF
-
-write_makefiles "$MY_DIR"/proprietary-files-qc-perf.txt true
-
-echo "endif" >> "$PRODUCTMK"
-
-cat << EOF >> "$ANDROIDMK"
-
-endif
-
 \$(shell mkdir -p \$(TARGET_OUT_VENDOR)/lib/egl && pushd \$(TARGET_OUT_VENDOR)/lib > /dev/null && ln -sf egl/libEGL_adreno.so libEGL_adreno.so && popd > /dev/null)
 \$(shell mkdir -p \$(TARGET_OUT_VENDOR)/lib64/egl && pushd \$(TARGET_OUT_VENDOR)/lib64 > /dev/null && ln -sf egl/libEGL_adreno.so libEGL_adreno.so && popd > /dev/null)
 EOF
 
-# We are done!
+# Finish
 write_footers
 
-if [ -s "$MY_DIR"/../$DEVICE/proprietary-files.txt ]; then
+if [ -s "${MY_DIR}/../${DEVICE}/proprietary-files.txt" ]; then
     # Reinitialize the helper for device
     INITIAL_COPYRIGHT_YEAR="$DEVICE_BRINGUP_YEAR"
-    setup_vendor "$DEVICE" "$VENDOR" "$XTENDED_ROOT" false
+    setup_vendor "${DEVICE}" "${VENDOR}" "${XTENDED_ROOT}" false
 
     # Copyright headers and guards
     write_headers
 
     # The standard device blobs
-    write_makefiles "$MY_DIR"/../$DEVICE/proprietary-files.txt true
+    write_makefiles "${MY_DIR}/../${DEVICE}/proprietary-files.txt" true
 
-    # We are done!
+    # Finish
     write_footers
 fi
