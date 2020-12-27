@@ -1,5 +1,8 @@
 /*
-   Copyright (c) 2014, The Linux Foundation. All rights reserved.
+   Copyright (C) 2007, The Android Open Source Project
+   Copyright (c) 2016, The CyanogenMod Project
+   Copyright (c) 2017, The LineageOS Project
+
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are
    met:
@@ -12,6 +15,7 @@
     * Neither the name of The Linux Foundation nor the names of its
       contributors may be used to endorse or promote products derived
       from this software without specific prior written permission.
+
    THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
@@ -25,25 +29,25 @@
    IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
-#include <sys/_system_properties.h>
-#include <sys/sysinfo.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
+
+#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
+#include <sys/_system_properties.h>
+
+#include "vendor_init.h"
 
 #define DEVINFO_FILE "/sys/project_info/project_name"
 #define SENSOR_VERSION_FILE "/sys/devices/soc/soc:fingerprint_detect/sensor_version"
-
-#include <android-base/properties.h>
-#include "vendor_init.h"
 
 using android::base::Trim;
 using android::base::GetProperty;
@@ -58,38 +62,6 @@ void property_override(char const prop[], char const value[])
         __system_property_update(pi, value, strlen(value));
     else
         __system_property_add(prop, strlen(prop), value, strlen(value));
-}
-
-void property_override_multi(char const system_prop[], char const vendor_prop[],char const bootimage_prop[],
-    char const value[])
-{
-    property_override(system_prop, value);
-    property_override(vendor_prop, value);
-    property_override(bootimage_prop, value);
-}
-
-void load_dalvikvm_properties()
-{
-    struct sysinfo sys;
-
-    sysinfo(&sys);
-    if (sys.totalram < 7000ull * 1024 * 1024) {
-        //6GB RAM
-        property_override("dalvik.vm.heapstartsize", "16m");
-        property_override("dalvik.vm.heaptargetutilization", "0.5");
-        property_override("dalvik.vm.heapmaxfree", "32m");
-        property_override("dalvik.vm.heapgrowthlimit", "256m");
-        property_override("dalvik.vm.heapsize", "512m");
-        property_override("dalvik.vm.heapminfree", "8m");
-    } else {
-        //8GB RAM
-        property_override("dalvik.vm.heapstartsize", "24m");
-        property_override("dalvik.vm.heaptargetutilization", "0.46");
-        property_override("dalvik.vm.heapmaxfree", "48m");
-        property_override("dalvik.vm.heapgrowthlimit", "256m");
-        property_override("dalvik.vm.heapsize", "512m");
-        property_override("dalvik.vm.heapminfree", "8m");
-    }
 }
 
 void init_target_properties()
@@ -143,12 +115,8 @@ void init_fingerprint_properties()
     }
 }
 
-
-void vendor_load_properties()
-{
-    // fingerprint
-    property_override_multi("ro.build.fingerprint", "ro.vendor.build.fingerprint","ro.bootimage.build.fingerprint", "google/coral/coral:11/RQ1A.201205.008/6943376:user/release-keys");
+void vendor_load_properties() {
+    LOG(INFO) << "Loading vendor specific properties";
     init_target_properties();
     init_fingerprint_properties();
-    load_dalvikvm_properties();
 }
